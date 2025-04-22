@@ -1,0 +1,28 @@
+\documentclass{standalone}
+\usepackage{TangramTikz}
+\begin{document}
+\begin{EnvTangramTikz}
+
+% Large triangle 1 (flipped horizontally and rotated 45 degrees)
+\PieceTangram[TangSol]<rotate=135>(5/10*sqrt(2)/1, 0.5){TangGrandTri}
+
+% Medium triangle (rotated 90 degrees counter-clockwise)
+\PieceTangram[TangSol]<rotate=180>(3, 0.5*sqrt(2)){TangMoyTri}
+
+% Square (no transformations)
+\PieceTangram[TangSol]<xscale=-1,rotate=180>(6, 9){TangPara}
+
+% Small triangle 1 (flipped vertically)
+\PieceTangram[TangSol]<yscale=-1>(0.5*sqrt(2), 1.5){TangPetTri}
+
+% Parallelogram (flipped and rotated)
+\PieceTangram[TangSol]<xscale=-1,rotate=135>(0.5*sqrt(2), 1+0.5*sqrt(2)){TangCar}
+
+% Large triangle 2 (rotated 180 degrees)
+\PieceTangram[TangSol]<rotate=180>(1, 1){TangPetTri}
+
+% Small triangle 2 (no transformations)
+\PieceTangram[TangSol](0*sqrt(2), 1/2*sqrt(2)){TangGrandTri}
+
+\end{EnvTangramTikz}
+\end{document}

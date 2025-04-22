@@ -127,6 +127,21 @@ class TangramPuzzle:
         print("\nVertices after transformation:\n")
         print(vertices_a_transformation)
 
+        piece_data = [(name, vertices, self.get_leftmost_topmost(vertices)) for name, vertices in vertices_a_transformation.items()]
+        sorted_pieces = sorted(piece_data, key=lambda item: (-item[2][1], item[2][0]))
+
+        # Create a new dictionary with vertices ordered clockwise
+        clockwise_pieces = {}
+        for name, vertices, _ in sorted_pieces:
+            clockwise_pieces[name] = self.sort_clockwise(vertices)
+
+        print("\nOriginal Pieces (sorted by leftmost topmost vertex):")
+        for name, vertices, _ in sorted_pieces:
+            print(f"{name}: {vertices}")
+
+        print("\nPieces with Vertices Ordered Clockwise:")
+        print(clockwise_pieces)
+
 
     def simplify_expression(self, expr):
         # Replace 'sqrt(2)' with '√2'
@@ -235,6 +250,28 @@ class TangramPuzzle:
             transformed_pieces[piece_name] = transformed_vertices
 
         return transformed_pieces
+
+    def get_leftmost_topmost(self,vertices):
+        return max(vertices, key=lambda v: (v[1], -v[0]))
+
+    def sort_clockwise(self,vertices):
+        if len(vertices) <= 1:
+            return vertices
+
+        # Find the leftmost topmost vertex
+        start = self.get_leftmost_topmost(vertices)
+        remaining = [v for v in vertices if v != start]
+
+        # Sort remaining points clockwise around 'start'
+        def sort_key(v):
+            dx = v[0] - start[0]
+            dy = v[1] - start[1]
+            angle = math.atan2(dy, dx)  # Angle in radians
+            distance = dx ** 2 + dy ** 2  # Squared distance (avoid sqrt for efficiency)
+            return (-angle, distance)  # Sort by angle descending (clockwise), then distance
+
+        remaining_sorted = sorted(remaining, key=sort_key)
+        return [start] + remaining_sorted
 
 # Example usage
 puzzle = TangramPuzzle("Second.tex")
