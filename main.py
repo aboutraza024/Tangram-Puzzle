@@ -131,16 +131,16 @@ class TangramPuzzle:
         sorted_pieces = sorted(piece_data, key=lambda item: (-item[2][1], item[2][0]))
 
         # Create a new dictionary with vertices ordered clockwise
-        clockwise_pieces = {}
+        self.clockwise_pieces = {}
         for name, vertices, _ in sorted_pieces:
-            clockwise_pieces[name] = self.sort_clockwise(vertices)
+            self.clockwise_pieces[name] = self.sort_clockwise(vertices)
 
         print("\nOriginal Pieces (sorted by leftmost topmost vertex):")
         for name, vertices, _ in sorted_pieces:
             print(f"{name}: {vertices}")
 
         print("\nPieces with Vertices Ordered Clockwise:")
-        print(clockwise_pieces)
+        print(self.clockwise_pieces)
 
 
     def simplify_expression(self, expr):
@@ -273,5 +273,54 @@ class TangramPuzzle:
         remaining_sorted = sorted(remaining, key=sort_key)
         return [start] + remaining_sorted
 
+    def _get_bounds(self):
+        all_x = [x for vertices in self.clockwise_pieces.values() for x, _ in vertices]
+        all_y = [y for vertices in self.clockwise_pieces.values() for _, y in vertices]
+        min_x, max_x = min(all_x), max(all_x)
+        min_y, max_y = min(all_y), max(all_y)
+
+        def extend(val, direction):
+            floor_val = math.floor(val)
+            fractional = val - floor_val
+
+            if direction == 'up':
+                if fractional <= 0.5:
+                    return floor_val + 1
+                else:
+                    return floor_val + 1.5
+            else:  # direction == 'down'
+                if fractional >= 0.5:
+                    return floor_val
+                else:
+                    return floor_val - 0.5
+
+        left = extend(min_x, 'down')
+        right = extend(max_x, 'up')
+        bottom = extend(min_y, 'down')
+        top = extend(max_y, 'up')
+
+        return left, right, bottom, top
+
+    def draw_pieces(self, output_filename):
+        left, right, bottom, top = self._get_bounds()
+        print("File Created",output_filename)
+        with open(output_filename, 'w') as f:
+            # Write LaTeX document header
+            f.write("\\documentclass{article}\n")
+            f.write("\\usepackage{tikz}\n")
+            f.write("\\usepackage[margin=1cm]{geometry}\n")
+            f.write("\\begin{document}\n")
+            f.write("\\begin{center}\n")
+            f.write("\\begin{tikzpicture}\n")  # Removed scale=0.5
+            f.write(f"\\draw[step=0.5cm,gray,very thin] ({left:.1f},{bottom:.1f}) grid ({right:.1f},{top:.1f});\n")
+            f.write("\\fill[red] (0,0) circle[radius=2pt];\n")
+            for piece_name, vertices in self.clockwise_pieces.items():
+                f.write("\\filldraw[fill=gray!20] ")
+                path = ' -- '.join(f"({x:.10f},{y:.10f})" for x, y in vertices)
+                f.write(path + " -- cycle;\n")
+            f.write("\\end{tikzpicture}\n")
+            f.write("\\end{center}\n")
+            f.write("\\end{document}\n")
+
 # Example usage
-puzzle = TangramPuzzle("Second.tex")
+TangramPuzzle('First.tex').draw_pieces('kangaroo_pieces_on_grid057.tex')
