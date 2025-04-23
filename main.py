@@ -127,7 +127,8 @@ class TangramPuzzle:
         print("\nVertices after transformation:\n")
         print(vertices_a_transformation)
 
-        piece_data = [(name, vertices, self.get_leftmost_topmost(vertices)) for name, vertices in vertices_a_transformation.items()]
+        piece_data = [(name, vertices, self.get_leftmost_topmost(vertices)) for name, vertices in
+                      vertices_a_transformation.items()]
         sorted_pieces = sorted(piece_data, key=lambda item: (-item[2][1], item[2][0]))
 
         # Create a new dictionary with vertices ordered clockwise
@@ -141,7 +142,6 @@ class TangramPuzzle:
 
         print("\nPieces with Vertices Ordered Clockwise:")
         print(self.clockwise_pieces)
-
 
     def simplify_expression(self, expr):
         # Replace 'sqrt(2)' with '√2'
@@ -218,7 +218,7 @@ class TangramPuzzle:
         elif shape == 'Parallelogram':
             return [(x, y), (x + 1, y), (x + 2, y + 1), (x + 1, y + 1)]
 
-    def apply_transformations(self,original_pieces, transformations):
+    def apply_transformations(self, original_pieces, transformations):
         transformed_pieces = {}
         for piece_name, transform in transformations.items():
             original_vertices = original_pieces.get(piece_name, [])
@@ -251,10 +251,10 @@ class TangramPuzzle:
 
         return transformed_pieces
 
-    def get_leftmost_topmost(self,vertices):
+    def get_leftmost_topmost(self, vertices):
         return max(vertices, key=lambda v: (v[1], -v[0]))
 
-    def sort_clockwise(self,vertices):
+    def sort_clockwise(self, vertices):
         if len(vertices) <= 1:
             return vertices
 
@@ -303,7 +303,7 @@ class TangramPuzzle:
 
     def draw_pieces(self, output_filename):
         left, right, bottom, top = self._get_bounds()
-        print("File Created",output_filename)
+        print("File Created", output_filename)
         with open(output_filename, 'w') as f:
             # Write LaTeX document header
             f.write("\\documentclass{article}\n")
@@ -322,5 +322,80 @@ class TangramPuzzle:
             f.write("\\end{center}\n")
             f.write("\\end{document}\n")
 
+    def draw_outline(self, output_tex_file):
+        all_vertices = []
+        for vertices in self.clockwise_pieces.values():
+            all_vertices.extend(vertices)
+        outline_vertices = self._compute_convex_hull(all_vertices)
+        x_coords = [x for (x, y) in outline_vertices]
+        y_coords = [y for (x, y) in outline_vertices]
+        x_min, x_max = self._compute_grid_bounds(min(x_coords), max(x_coords))
+        y_min, y_max = self._compute_grid_bounds(min(y_coords), max(y_coords))
+        tikz_code = self._generate_outline_tikz(outline_vertices, x_min, x_max, y_min, y_max)
+
+        with open(output_tex_file, 'w') as f:
+            f.write(tikz_code)
+
+    def _compute_grid_bounds(self, min_val, max_val):
+        def extend(val, direction):
+            floor_val = math.floor(val)
+            fractional = val - floor_val
+
+            if direction == 'up':
+                if fractional <= 0.5:
+                    return floor_val + 1
+                else:
+                    return floor_val + 1.5
+            else:  # direction == 'down'
+                if fractional >= 0.5:
+                    return floor_val
+                else:
+                    return floor_val - 0.5
+
+        min_bound = extend(min_val, 'down')
+        max_bound = extend(max_val, 'up')
+        return min_bound, max_bound
+
+        min_bound = math.floor(min_val) - 0.5
+        max_bound = adjust_bound(max_val)[1]
+        return min_bound, max_bound
+
+    def _compute_convex_hull(self, points):
+        points = sorted(set(points))
+        if len(points) <= 1:
+            return points
+
+        lower = []
+        for p in points:
+            while len(lower) >= 2 and self._cross(lower[-2], lower[-1], p) <= 0:
+                lower.pop()
+            lower.append(p)
+
+        upper = []
+        for p in reversed(points):
+            while len(upper) >= 2 and self._cross(upper[-2], upper[-1], p) <= 0:
+                upper.pop()
+            upper.append(p)
+        return lower[:-1] + upper[:-1]
+
+    def _cross(self, o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    def _generate_outline_tikz(self, vertices, x_min, x_max, y_min, y_max):
+        tikz = [
+            r"\documentclass{article}",
+            r"\usepackage{tikz}",
+            r"\begin{document}",
+            r"\begin{tikzpicture}[scale=1]",
+            rf"\draw[step=0.5cm,gray,very thin] ({x_min},{y_min}) grid ({x_max},{y_max});",
+            r"\filldraw[red] (0,0) circle (1pt);",
+            r"\draw[thick] " + " -- ".join(f"({x:.6f},{y:.6f})" for (x, y) in vertices) + " -- cycle;",
+            r"\end{tikzpicture}",
+            r"\end{document}"
+        ]
+        return "\n".join(tikz)
+
+
 # Example usage
-TangramPuzzle('First.tex').draw_pieces('kangaroo_pieces_on_grid057.tex')
+TangramPuzzle('Second.tex').draw_pieces('f2.tex')
+TangramPuzzle('Second.tex').draw_outline("outline2.tex")
